@@ -3,23 +3,28 @@ package main
 import (
 	"fmt"
 	"log"
-	"github.com/gocolly/colly"
+	"net/http"
 )
 
+func helloHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/test" {
+		http.Error(w, "404 not found.", http.StatusNotFound)
+		return
+	}
+
+	if r.Method != "GET" {
+		http.Error(w, "You can't use any other method then GET", http.StatusNotFound)
+		return
+	}
+
+	fmt.Fprintf(w, "Golang webserver")
+}
+
 func main() {
-	c := colly.NewCollector()
+	http.HandleFunc("/test", helloHandler) // Update this line of code
 
-	c.OnError(func(r *colly.Response, err error) {
-		log.Printf("Request URL: %v\nFailed with response: %v\nError: %v\n", r.Request.URL, r, err)
-	})
-
-	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		fmt.Println(link)
-	})
-
-	err := c.Visit("https://cssight.com")
-	if err != nil {
+	fmt.Printf("Starting server at port 8080\n")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
 }
